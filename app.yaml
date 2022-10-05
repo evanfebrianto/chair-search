@@ -1,19 +1,41 @@
+# runtime: python37
+
+# handlers:
+#   # This configures Google App Engine to serve the files in the app's static
+#   # directory.
+# - url: /assets
+#   static_dir: assets
+
+#   # This handler routes all requests not caught above to your main app. It is
+#   # required when static routes are defined, but can be omitted (along with
+#   # the entire handlers section) when there are no static files defined.
+# - url: /.*
+#   script: auto
+#   secure: always
+
+# instance_class: F2
+
+# env_variables:
+#   RUNNING_ON_GCP: True
+
+
 runtime: python37
-
-handlers:
-  # This configures Google App Engine to serve the files in the app's static
-  # directory.
-- url: /assets
-  static_dir: assets
-
-  # This handler routes all requests not caught above to your main app. It is
-  # required when static routes are defined, but can be omitted (along with
-  # the entire handlers section) when there are no static files defined.
-- url: /.*
-  script: auto
-  secure: always
-
+env: standard
 instance_class: F2
-
+handlers:
+  - url: /assets/(.*)
+    static_files: assets/\1
+    upload: assets/.*
+  - url: /.*
+    script: auto
+    secure: always
+  - url: .*
+    script: auto
 env_variables:
-  RUNNING_ON_GCP: True
+  RUNNING_ON_GCP: 'True'
+automatic_scaling:
+  min_idle_instances: automatic
+  max_idle_instances: automatic
+  min_pending_latency: automatic
+  max_pending_latency: automatic
+service_account: chair-search-demo@appspot.gserviceaccount.com

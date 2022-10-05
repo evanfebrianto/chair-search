@@ -9,5 +9,5 @@ PRODUCT_SET_ID = "CHAIRS-PRODUCTSET-V2"
 MODEL_VERSION = "v344565"
 PREPROCESS_URL = "https://europe-west1-chair-search-demo.cloudfunctions.net/preprocessing-1-elias"
 
-LOCAL_CREDENTIALS = "/Users/eliasd/dev/chairs-demo-frontend/chair-search-demo-9e451a035240.json"
+LOCAL_CREDENTIALS = "/Users/evan/Documents/demo/chair-search/config/chair-search-demo-f68cf7e1a28a.json"
 

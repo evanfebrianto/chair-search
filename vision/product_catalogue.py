@@ -2,11 +2,11 @@ import random
 import os
 import base64
 
-from google.cloud import vision
+from google.cloud import vision_v1
 
 project_id = "chair-search-demo"
 location = "europe-west1"
-product_search_client = vision.ProductSearchClient()
+product_search_client = vision_v1.ProductSearchClient()
 
 def create_product_set(product_set_id, product_set_display_name):
     """Create a product set.
@@ -16,14 +16,14 @@ def create_product_set(product_set_id, product_set_display_name):
         product_set_id: Id of the product set.
         product_set_display_name: Display name of the product set.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # A resource that represents Google Cloud Platform location.
     location_path = client.location_path(
         project=project_id, location=location)
 
     # Create a product set with the product set specification in the region.
-    product_set = vision.types.ProductSet(
+    product_set = vision_v1.types.ProductSet(
         display_name=product_set_display_name)
 
     # The response is the product set with `name` populated.
@@ -46,14 +46,14 @@ def create_product(product_id, product_display_name,
         product_display_name: Display name of the product.
         product_category: Category of the product.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # A resource that represents Google Cloud Platform location.
     location_path = client.location_path(project=project_id, location=location)
 
     # Create a product with the product specification in the region.
     # Set product display name and product category.
-    product = vision.types.Product(
+    product = vision_v1.types.Product(
         display_name=product_display_name,
         product_category=product_category)
 
@@ -75,7 +75,7 @@ def add_product_to_product_set(product_id, product_set_id):
         product_id: Id of the product.
         product_set_id: Id of the product set.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # Get the full path of the product set.
     product_set_path = client.product_set_path(
@@ -101,14 +101,14 @@ def create_reference_image(product_id, reference_image_id, gcs_uri):
         reference_image_id: Id of the reference image.
         gcs_uri: Google Cloud Storage path of the input image.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # Get the full path of the product.
     product_path = client.product_path(
         project=project_id, location=location, product=product_id)
 
     # Create a reference image.
-    reference_image = vision.types.ReferenceImage(uri=gcs_uri)
+    reference_image = vision_v1.types.ReferenceImage(uri=gcs_uri)
 
     # The response is the reference image with `name` populated.
     image = client.create_reference_image(
@@ -127,7 +127,7 @@ def list_products():
         project_id: Id of the project.
         location: A compute region name.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # A resource that represents Google Cloud Platform location.
     location_path = client.location_path(project=project_id, location=location)
@@ -152,7 +152,7 @@ def get_product(product_id):
         location: A compute region name.
         product_id: Id of the product.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # Get the full path of the product.
     product_path = client.product_path(
@@ -180,7 +180,7 @@ def update_product_labels(product_id, key, value):
         key: The key of the label.
         value: The value of the label.
     """
-    client = vision.ProductSearchClient()
+    client = vision_v1.ProductSearchClient()
 
     # Get the name of the product.
     product_path = client.product_path(
@@ -188,13 +188,13 @@ def update_product_labels(product_id, key, value):
 
     # Set product name, product label and product display name.
     # Multiple labels are also supported.
-    key_value = vision.types.Product.KeyValue(key=key, value=value)
-    product = vision.types.Product(
+    key_value = vision_v1.types.Product.KeyValue(key=key, value=value)
+    product = vision_v1.types.Product(
         name=product_path,
         product_labels=[key_value])
 
     # Updating only the product_labels field here.
-    update_mask = vision.types.FieldMask(paths=['product_labels'])
+    update_mask = vision_v1.types.FieldMask(paths=['product_labels'])
 
     # This overwrites the product_labels.
     updated_product = client.update_product(
@@ -205,7 +205,7 @@ def update_product_labels(product_id, key, value):
     print('Updated product labels: {}'.format(product.product_labels))
 
 
-# [END vision_product_search_update_product_labels]
+# [END vision_v1_product_search_update_product_labels]
 
 
 def get_similar_products(product_set_id, img=None, product_category='homegoods-v2', filter=None):
@@ -223,21 +223,21 @@ def get_similar_products(product_set_id, img=None, product_category='homegoods-v
         color:blue AND style:kids
     """
     # product_search_client is needed only for its helper methods.
-    image_annotator_client = vision.ImageAnnotatorClient()
+    image_annotator_client = vision_v1.ImageAnnotatorClient()
 
     content = base64.b64decode(img)
     # Create annotate image request along with product search feature.
-    image = vision.types.Image(content=content)
+    image = vision_v1.types.Image(content=content)
 
     # product search specific parameters
     product_set_path = product_search_client.product_set_path(
         project=project_id, location=location,
         product_set=product_set_id)
-    product_search_params = vision.types.ProductSearchParams(
+    product_search_params = vision_v1.types.ProductSearchParams(
         product_set=product_set_path,
         product_categories=[product_category],
         filter=filter)
-    image_context = vision.types.ImageContext(
+    image_context = vision_v1.types.ImageContext(
         product_search_params=product_search_params)
 
     # Search products similar to the image.
@@ -246,11 +246,13 @@ def get_similar_products(product_set_id, img=None, product_category='homegoods-v
 
     index_time = response.product_search_results.index_time
     print('Product set index time:')
-    print('  seconds: {}'.format(index_time.seconds))
-    print('  nanos: {}\n'.format(index_time.nanos))
+    print(index_time)
+    # print('Product set index time:')
+    # print('  seconds: {}'.format(index_time.seconds))
+    # print('  nanos: {}\n'.format(index_time.nanos))
 
     results = response.product_search_results.results
-    # print(results)
+    print(results)
 
     # print('Search results:')
     # for result in results:

@@ -14,7 +14,10 @@ from util import predict_json
 from config import config as cfg
 
 if not os.getenv("RUNNING_ON_GCP"):
+    print("Running locally")
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = cfg.LOCAL_CREDENTIALS
+else:
+    print("Running on GCP")
 
 app = Flask(__name__, static_folder='assets')
 
