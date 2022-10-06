@@ -1,4 +1,5 @@
 import googleapiclient.discovery
+import time
 
 
 def predict_json(project, model, input, version=None):
@@ -25,3 +26,14 @@ def predict_json(project, model, input, version=None):
         raise RuntimeError(response['error'])
 
     return response['predictions'][0]['output_bytes']['b64']  # TODO: Make this just return json, not list
+
+
+def time_it(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"Time taken for {func.__name__} is {end - start} seconds")
+        return result
+
+    return wrapper

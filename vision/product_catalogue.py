@@ -245,14 +245,12 @@ def get_similar_products(product_set_id, img=None, product_category='homegoods-v
         image, image_context=image_context)
 
     index_time = response.product_search_results.index_time
-    print('Product set index time:')
-    print(index_time)
-    # print('Product set index time:')
+    # print(f'[DEBUG] Product set index time: {index_time}')
     # print('  seconds: {}'.format(index_time.seconds))
     # print('  nanos: {}\n'.format(index_time.nanos))
 
     results = response.product_search_results.results
-    print(results)
+    # print(results)
 
     # print('Search results:')
     # for result in results:

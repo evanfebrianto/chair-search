@@ -5,13 +5,14 @@ import random
 from urllib import response
 import uuid
 import json
+import time
 
 from flask import Flask, render_template, request, redirect, jsonify
 from google.cloud import storage, datastore
 import requests
 
 from vision.product_catalogue import get_similar_products, get_reference_image, sample_get_reference_image
-from util import predict_json
+from util import predict_json, time_it
 from config import config as cfg
 
 if not os.getenv("RUNNING_ON_GCP"):
@@ -33,6 +34,7 @@ def root():
 
 
 @app.route('/autoDraw')
+@time_it
 def auto_draw():
     if request.args.get('sketch_id'):
         source_blob_name = f"{request.args.get('sketch_id')}/coordinates.json"
@@ -64,8 +66,10 @@ def auto_draw():
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    print(f'[DEBUG] Generate request is called!')
+    T1 = time.time()
     sketch = request.json["imgBase64"]
-
+    T2 = time.time()
     # This code below saves the drawn chair locally
     # with open("huijie_something_3.json", 'w') as file:
     #     import json
@@ -80,15 +84,19 @@ def generate():
     #     local_img['y'] = [str(number) for number in local_img['y']]
     #     file.write(json.dumps(local_img))
 
+    T3 = time.time()
     payload = {
         "img": sketch.split(',')[1]
     }
     cropped_sketch = requests.post(cfg.PREPROCESS_URL, json=payload).json()
+    T4 = time.time()
     generated_chair = predict_json(project="chair-search-demo", model="chair_generation",
                                    input=cropped_sketch, version=cfg.MODEL_VERSION)
+    T5 = time.time()
 
     # Get similar products and filter to top 3
     similar_products, response = get_similar_products(cfg.PRODUCT_SET_ID, generated_chair)  # Generated chair
+    T6 = time.time()
 
     # For debugging purposes
     # export similar_products which contains list of dicts
@@ -99,18 +107,20 @@ def generate():
     #     # file write _dict
     #     file.write(json.dumps(_dict))
 
+    T7 = time.time()
     top = sorted(similar_products, key=lambda product: product.score, reverse=True)[:4]
     products = [(product.product.display_name, product.image, product.score) for product in
                 top] or "No matching products found!"
+    T8 = time.time()
     images = []
     for index, (product_name, product_image, product_score) in enumerate(products):
-        # sample_get_reference_image(product_image)
         img_uri = get_reference_image(product_image).uri.split('/')
         blob_name = os.path.join(*img_uri[3:])
         img_blob = download_blob(storage_client, cfg.BUCKET_NAME, blob_name)
         img_blob = base64.b64encode(img_blob).decode()  # Convert to string so we can add data URI header
         img_blob = add_png_header(img_blob)
         images.append({'name': product_name, 'src': img_blob})
+    T9 = time.time()
 
     generated_chair = add_png_header(generated_chair)
     resp = {
@@ -119,7 +129,17 @@ def generate():
         "original_sketch": sketch,
         "generated_chair": generated_chair
     }
-
+    T10 = time.time()
+    print(f'[DEBUG] T2-T1: {T2-T1}')
+    print(f'[DEBUG] T3-T2: {T3-T2}')
+    print(f'[DEBUG] T4-T3: {T4-T3}')
+    print(f'[DEBUG] T5-T4: {T5-T4}')
+    print(f'[DEBUG] T6-T5: {T6-T5}')
+    print(f'[DEBUG] T7-T6: {T7-T6}')
+    print(f'[DEBUG] T8-T7: {T8-T7}')
+    print(f'[DEBUG] T9-T8: {T9-T8}')
+    print(f'[DEBUG] T10-T9: {T10-T9}')
+    print(f'[DEBUG] Total time taken: {T10-T1}')
     return jsonify(resp)
 
 
@@ -148,6 +168,7 @@ def add_png_header(data):
 def send_sketch():
     """Save sketch and sketch coordinates to Datastore and GCS"""
     # TODO: Make this prettier :)
+    print(f'[DEBUG] Send sketch request is called!')
     req = request.get_json()
     email = req.get('email')
     name = req.get('name')
