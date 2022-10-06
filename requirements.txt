@@ -6,3 +6,4 @@ Pillow
 google-api-python-client
 opencv-python
 scikit-image
+gunicorn

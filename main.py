@@ -16,10 +16,7 @@ from util import predict_json, time_it
 from config import config as cfg
 
 if not os.getenv("RUNNING_ON_GCP"):
-    print("Running locally")
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = cfg.LOCAL_CREDENTIALS
-else:
-    print("Running on GCP")
 
 app = Flask(__name__, static_folder='assets')
 
@@ -215,5 +212,5 @@ if __name__ == "__main__":
     # the "static" directory. See:
     # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
     # App Engine itself will serve those files as configured in app.yaml.
-    app.run(host="127.0.0.1", port=8080, debug=True)
+    app.run(host='127.0.0.1', port=8080, debug=True)
     # Add labels to chairs and use "Jag vill ha dyna" "jag vill ha armstöd" as labels and use these for product catalogue
