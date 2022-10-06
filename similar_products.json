@@ -1,0 +1,220 @@
+{
+    "productSearchResults": {
+      "indexTime": "2022-10-06T01:19:54.661791554Z",
+      "results": [
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/FÄRLÖV_sofa_ID",
+            "displayName": "FÄRLÖV",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.2407475,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/FÄRLÖV_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/MUREN_sofa_ID",
+            "displayName": "MUREN",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.23959555,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/MUREN_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/EKOLSUND_sofa_ID",
+            "displayName": "EKOLSUND",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.23167938,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/EKOLSUND_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/SÖDERHAMN_sofa_ID",
+            "displayName": "SÖDERHAMN",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.22804153,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/SÖDERHAMN_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/HENRIKSDAL_ID",
+            "displayName": "HENRIKSDAL",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.22667733,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/HENRIKSDAL_ID/referenceImages/test_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/VOLFGANG_ID",
+            "displayName": "VOLFGANG",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.2164542,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/VOLFGANG_ID/referenceImages/test_2.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/LIDHULT_sofa_ID",
+            "displayName": "LIDHULT",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.21311091,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/LIDHULT_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/TULLSTA_sofa_ID",
+            "displayName": "TULLSTA",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.21190096,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/TULLSTA_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/EKERÖ_sofa_ID",
+            "displayName": "EKERÖ",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.20595774,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/EKERÖ_sofa_ID/referenceImages/image_1.png"
+        },
+        {
+          "product": {
+            "name": "projects/chair-search-demo/locations/europe-west1/products/NORRÅKER_bar_ID",
+            "displayName": "NORRÅKER",
+            "productCategory": "homegoods-v2"
+          },
+          "score": 0.20092985,
+          "image": "projects/chair-search-demo/locations/europe-west1/products/NORRÅKER_bar_ID/referenceImages/image_3.png"
+        }
+      ],
+      "productGroupedResults": [
+        {
+          "boundingPoly": {
+            "normalizedVertices": [
+              {
+                "x": 0.0022472774,
+                "y": 0.08520925
+              },
+              {
+                "x": 0.98730284,
+                "y": 0.08520925
+              },
+              {
+                "x": 0.98730284,
+                "y": 0.9131532
+              },
+              {
+                "x": 0.0022472774,
+                "y": 0.9131532
+              }
+            ]
+          },
+          "results": [
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/MUREN_sofa_ID",
+                "displayName": "MUREN",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.24417557,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/MUREN_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/FÄRLÖV_sofa_ID",
+                "displayName": "FÄRLÖV",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.23628786,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/FÄRLÖV_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/EKOLSUND_sofa_ID",
+                "displayName": "EKOLSUND",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.2355408,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/EKOLSUND_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/EKERÖ_sofa_ID",
+                "displayName": "EKERÖ",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.22806272,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/EKERÖ_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/SÖDERHAMN_sofa_ID",
+                "displayName": "SÖDERHAMN",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.22616033,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/SÖDERHAMN_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/VOLFGANG_ID",
+                "displayName": "VOLFGANG",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.22115013,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/VOLFGANG_ID/referenceImages/test_2.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/HENRIKSDAL_ID",
+                "displayName": "HENRIKSDAL",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.21816732,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/HENRIKSDAL_ID/referenceImages/test_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/LIDHULT_sofa_ID",
+                "displayName": "LIDHULT",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.21030068,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/LIDHULT_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/TULLSTA_sofa_ID",
+                "displayName": "TULLSTA",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.21024719,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/TULLSTA_sofa_ID/referenceImages/image_1.png"
+            },
+            {
+              "product": {
+                "name": "projects/chair-search-demo/locations/europe-west1/products/NORRÅKER_bar_ID",
+                "displayName": "NORRÅKER",
+                "productCategory": "homegoods-v2"
+              },
+              "score": 0.20796922,
+              "image": "projects/chair-search-demo/locations/europe-west1/products/NORRÅKER_bar_ID/referenceImages/image_3.png"
+            }
+          ],
+          "objectAnnotations": [
+            {
+              "mid": "/m/02crq1",
+              "name": "Couch",
+              "score": 0.6674242
+            }
+          ]
+        }
+      ]
+    }
+  }
