@@ -2,6 +2,7 @@ import base64
 import os
 from datetime import datetime
 import random
+from urllib import response
 import uuid
 import json
 
@@ -9,7 +10,7 @@ from flask import Flask, render_template, request, redirect, jsonify
 from google.cloud import storage, datastore
 import requests
 
-from vision.product_catalogue import get_similar_products, get_reference_image
+from vision.product_catalogue import get_similar_products, get_reference_image, sample_get_reference_image
 from util import predict_json
 from config import config as cfg
 
@@ -87,12 +88,23 @@ def generate():
                                    input=cropped_sketch, version=cfg.MODEL_VERSION)
 
     # Get similar products and filter to top 3
-    similar_products = get_similar_products(cfg.PRODUCT_SET_ID, generated_chair)  # Generated chair
+    similar_products, response = get_similar_products(cfg.PRODUCT_SET_ID, generated_chair)  # Generated chair
+
+    # For debugging purposes
+    # export similar_products which contains list of dicts
+    # with open("similar_products.json", 'w') as file:
+    #     from google.protobuf.json_format import MessageToJson, MessageToDict
+    #     serialized = MessageToJson(response._pb)
+    #     _dict = MessageToDict(response._pb)
+    #     # file write _dict
+    #     file.write(json.dumps(_dict))
+
     top = sorted(similar_products, key=lambda product: product.score, reverse=True)[:4]
     products = [(product.product.display_name, product.image, product.score) for product in
                 top] or "No matching products found!"
     images = []
     for index, (product_name, product_image, product_score) in enumerate(products):
+        # sample_get_reference_image(product_image)
         img_uri = get_reference_image(product_image).uri.split('/')
         blob_name = os.path.join(*img_uri[3:])
         img_blob = download_blob(storage_client, cfg.BUCKET_NAME, blob_name)

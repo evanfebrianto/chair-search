@@ -2,11 +2,11 @@ import random
 import os
 import base64
 
-from google.cloud import vision_v1
+from google.cloud import vision_v1, vision_v1p3beta1
 
 project_id = "chair-search-demo"
 location = "europe-west1"
-product_search_client = vision_v1.ProductSearchClient()
+product_search_client = vision_v1p3beta1.ProductSearchClient()
 
 def create_product_set(product_set_id, product_set_display_name):
     """Create a product set.
@@ -266,8 +266,27 @@ def get_similar_products(product_set_id, img=None, product_category='homegoods-v
     #     product.display_name))
     # print('Product description: {}\n'.format(product.description))
     # print('Product labels: {}\n'.format(product.product_labels))
-    return results
+    return results, response
 
 
 def get_reference_image(name):
-     return product_search_client.get_reference_image(name)
+     # Initialize request argument(s)
+    request = vision_v1p3beta1.GetReferenceImageRequest(
+        name=name,
+    )
+    return product_search_client.get_reference_image(request=request)
+
+def sample_get_reference_image(name):
+    # Create a client
+    client = vision_v1p3beta1.ProductSearchClient()
+
+    # Initialize request argument(s)
+    request = vision_v1p3beta1.GetReferenceImageRequest(
+        name=name,
+    )
+
+    # Make the request
+    response = client.get_reference_image(request=request)
+
+    # Handle the response
+    print(response)
