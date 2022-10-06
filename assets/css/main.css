@@ -2835,7 +2835,7 @@ input, select, textarea {
 	}
 
 		ul.menu > li {
-			border-left: solid 1px rgba(255, 255, 255, 0.15);
+			border-left: solid 1px white;
 			display: inline-block;
 			line-height: 1;
 			margin-left: 1.5em;
@@ -3531,6 +3531,7 @@ input, select, textarea {
 
 	#sidebar {
 		padding: 2.5em 2.5em 0.5em 2.5em ;
+		/* background: #F7475E; */ /* devoteam color */
 		background: #122640;
 		cursor: default;
 		height: 100vh;
