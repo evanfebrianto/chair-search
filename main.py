@@ -28,10 +28,9 @@ datastore_client = datastore.Client(project=cfg.PROJECT_ID)
 # Initialize variables
 random_chairs = glob.glob("assets/static_chairs/*.json")
 current_chair = None
+pipeline = None
 if cfg.DEBUG:
     pipeline = PipelineTimer()
-else:
-    pipeline = None
 
 @app.route("/index.html")
 @app.route("/")
@@ -77,14 +76,15 @@ def auto_draw():
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    global pipeline
     if cfg.DEBUG:
         max_iter = cfg.STRESS_TEST_ITERATIONS
         pipeline = PipelineTimer()
     else:
         max_iter = 1
     for i in range(max_iter):
-        print(f'[INFO] Iteration {i+1}/{max_iter}')
         if pipeline:
+            print(f'[INFO] Iteration {i+1}/{max_iter}')
             pipeline('start')
         sketch = request.json["imgBase64"]
         if pipeline:
