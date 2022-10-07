@@ -1,5 +1,5 @@
 import base64
-import os
+import os, glob
 from datetime import datetime
 import random
 from urllib import response
@@ -23,6 +23,9 @@ app = Flask(__name__, static_folder='assets')
 storage_client = storage.Client(project=cfg.PROJECT_ID)
 datastore_client = datastore.Client(project=cfg.PROJECT_ID)
 
+# Initialize variables
+random_chairs = glob.glob("assets/static_chairs/*.json")
+current_chair = None
 
 @app.route("/index.html")
 @app.route("/")
@@ -51,12 +54,15 @@ def auto_draw():
         }
         return jsonify(resp)
 
-    files = os.listdir("assets/static_chairs")
-    file = files[random.randint(0, len(files) - 1)]
-    path = f"assets/static_chairs/{file}"
+    # Make sure we don't get the same chair
+    global current_chair
+    chair = random.choice(random_chairs)
+    while chair == current_chair:
+        chair = random.choice(random_chairs)
+    current_chair = chair
     resp = {
         "success": True,
-        "filepath": path
+        "filepath": current_chair
     }
     return jsonify(resp)
 
