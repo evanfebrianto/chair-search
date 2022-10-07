@@ -1,5 +1,7 @@
 import googleapiclient.discovery
 import time
+import json
+import numpy as np
 
 
 def predict_json(project, model, input, version=None):
@@ -37,3 +39,49 @@ def time_it(func):
         return result
 
     return wrapper
+
+class PipelineTimer:
+    def __init__(self):
+        self.start = time.time()
+        self.prev = self.start
+        self.__data = {}
+    
+    @property
+    def data(self):
+        return self.__data
+
+    @data.setter
+    def data(self, value):
+        name, duration = value
+        if name in self.__data:
+            self.__data[name].append(duration)
+        else:
+            self.__data[name] = [duration]
+
+    def __call__(self, name):
+        now = time.time()
+        duration = now - self.prev
+        self.prev = now
+        self.data = (name, duration)
+
+    def get_statistic(self):
+        # Calculate min, max, median, std, mean for each key
+        result = {}
+        for key, value in self.data.items():
+            result[key] = {
+                'min': np.min(value),
+                'max': np.max(value),
+                'median': np.median(value),
+                'std': np.std(value),
+                'mean': np.mean(value)
+            }
+        result['num of data'] = len(value)
+        # remove 'start' key
+        result.pop('start')
+        return result
+    
+    def export(self, path):
+        # export data from get_statistic to json file
+        _temp = self.get_statistic()
+        with open(path, 'w') as f:
+            json.dump(_temp, f)

@@ -12,7 +12,7 @@ from google.cloud import storage, datastore
 import requests
 
 from vision.product_catalogue import get_similar_products, get_reference_image, sample_get_reference_image
-from util import predict_json, time_it
+from util import predict_json, time_it, PipelineTimer
 from config import config as cfg
 
 if not os.getenv("RUNNING_ON_GCP"):
@@ -26,6 +26,10 @@ datastore_client = datastore.Client(project=cfg.PROJECT_ID)
 # Initialize variables
 random_chairs = glob.glob("assets/static_chairs/*.json")
 current_chair = None
+if cfg.DEBUG:
+    pipeline = PipelineTimer()
+else:
+    pipeline = None
 
 @app.route("/index.html")
 @app.route("/")
@@ -69,80 +73,83 @@ def auto_draw():
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    print(f'[DEBUG] Generate request is called!')
-    T1 = time.time()
-    sketch = request.json["imgBase64"]
-    T2 = time.time()
-    # This code below saves the drawn chair locally
-    # with open("huijie_something_3.json", 'w') as file:
-    #     import json
-    #     # request.json.pop('imgBase64')
-    #     local_img = {
-    #         'x': request.json['x'],
-    #         'y': request.json['y'],
-    #         'drag': request.json['drag']
-    #     }
+    if cfg.DEBUG:
+        max_iter = 10
+    else:
+        max_iter = 1
+    for i in range(max_iter):
+        if pipeline:
+            pipeline('start')
+        sketch = request.json["imgBase64"]
+        if pipeline:
+            pipeline('downloaded sketch')
+        # This code below saves the drawn chair locally
+        # with open("huijie_something_3.json", 'w') as file:
+        #     import json
+        #     # request.json.pop('imgBase64')
+        #     local_img = {
+        #         'x': request.json['x'],
+        #         'y': request.json['y'],
+        #         'drag': request.json['drag']
+        #     }
 
-    #     local_img['x'] = [str(number) for number in local_img['x']]
-    #     local_img['y'] = [str(number) for number in local_img['y']]
-    #     file.write(json.dumps(local_img))
+        #     local_img['x'] = [str(number) for number in local_img['x']]
+        #     local_img['y'] = [str(number) for number in local_img['y']]
+        #     file.write(json.dumps(local_img))
+        payload = {
+            "img": sketch.split(',')[1]
+        }
+        cropped_sketch = requests.post(cfg.PREPROCESS_URL, json=payload).json()
+        if pipeline:
+            pipeline('preprocessed sketch')
+        generated_chair = predict_json(project="chair-search-demo", model="chair_generation",
+                                    input=cropped_sketch, version=cfg.MODEL_VERSION)
+        if pipeline:
+            pipeline('GAN generated chair')
 
-    T3 = time.time()
-    payload = {
-        "img": sketch.split(',')[1]
-    }
-    cropped_sketch = requests.post(cfg.PREPROCESS_URL, json=payload).json()
-    T4 = time.time()
-    generated_chair = predict_json(project="chair-search-demo", model="chair_generation",
-                                   input=cropped_sketch, version=cfg.MODEL_VERSION)
-    T5 = time.time()
+        # Get similar products and filter to top 3
+        similar_products, response = get_similar_products(cfg.PRODUCT_SET_ID, generated_chair)  # Generated chair
+        if pipeline:
+            pipeline('got similar products')
 
-    # Get similar products and filter to top 3
-    similar_products, response = get_similar_products(cfg.PRODUCT_SET_ID, generated_chair)  # Generated chair
-    T6 = time.time()
+        # For debugging purposes
+        # export similar_products which contains list of dicts
+        # with open("similar_products.json", 'w') as file:
+        #     from google.protobuf.json_format import MessageToJson, MessageToDict
+        #     serialized = MessageToJson(response._pb)
+        #     _dict = MessageToDict(response._pb)
+        #     # file write _dict
+        #     file.write(json.dumps(_dict))
 
-    # For debugging purposes
-    # export similar_products which contains list of dicts
-    # with open("similar_products.json", 'w') as file:
-    #     from google.protobuf.json_format import MessageToJson, MessageToDict
-    #     serialized = MessageToJson(response._pb)
-    #     _dict = MessageToDict(response._pb)
-    #     # file write _dict
-    #     file.write(json.dumps(_dict))
+        top = sorted(similar_products, key=lambda product: product.score, reverse=True)[:4]
+        if pipeline:
+            pipeline('filtered similar products')
+        products = [(product.product.display_name, product.image, product.score) for product in
+                    top] or "No matching products found!"
+        if pipeline:
+            pipeline('got product info')
+        images = []
+        for index, (product_name, product_image, product_score) in enumerate(products):
+            img_uri = get_reference_image(product_image).uri.split('/')
+            blob_name = os.path.join(*img_uri[3:])
+            img_blob = download_blob(storage_client, cfg.BUCKET_NAME, blob_name)
+            img_blob = base64.b64encode(img_blob).decode()  # Convert to string so we can add data URI header
+            img_blob = add_png_header(img_blob)
+            images.append({'name': product_name, 'src': img_blob})
+        if pipeline:
+            pipeline('got product images')
 
-    T7 = time.time()
-    top = sorted(similar_products, key=lambda product: product.score, reverse=True)[:4]
-    products = [(product.product.display_name, product.image, product.score) for product in
-                top] or "No matching products found!"
-    T8 = time.time()
-    images = []
-    for index, (product_name, product_image, product_score) in enumerate(products):
-        img_uri = get_reference_image(product_image).uri.split('/')
-        blob_name = os.path.join(*img_uri[3:])
-        img_blob = download_blob(storage_client, cfg.BUCKET_NAME, blob_name)
-        img_blob = base64.b64encode(img_blob).decode()  # Convert to string so we can add data URI header
-        img_blob = add_png_header(img_blob)
-        images.append({'name': product_name, 'src': img_blob})
-    T9 = time.time()
-
-    generated_chair = add_png_header(generated_chair)
-    resp = {
-        "success": True,
-        "results": images,
-        "original_sketch": sketch,
-        "generated_chair": generated_chair
-    }
-    T10 = time.time()
-    print(f'[DEBUG] T2-T1: {T2-T1}')
-    print(f'[DEBUG] T3-T2: {T3-T2}')
-    print(f'[DEBUG] T4-T3: {T4-T3}')
-    print(f'[DEBUG] T5-T4: {T5-T4}')
-    print(f'[DEBUG] T6-T5: {T6-T5}')
-    print(f'[DEBUG] T7-T6: {T7-T6}')
-    print(f'[DEBUG] T8-T7: {T8-T7}')
-    print(f'[DEBUG] T9-T8: {T9-T8}')
-    print(f'[DEBUG] T10-T9: {T10-T9}')
-    print(f'[DEBUG] Total time taken: {T10-T1}')
+        generated_chair = add_png_header(generated_chair)
+        resp = {
+            "success": True,
+            "results": images,
+            "original_sketch": sketch,
+            "generated_chair": generated_chair
+        }
+        if pipeline:
+            pipeline('generated response')
+            if current_chair:
+                pipeline.export(path=current_chair.split('/')[-1].split('.')[0] + '.json')
     return jsonify(resp)
 
 
