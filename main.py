@@ -7,6 +7,8 @@ import uuid
 import json
 import time
 
+from tqdm import tqdm
+
 from flask import Flask, render_template, request, redirect, jsonify
 from google.cloud import storage, datastore
 import requests
@@ -38,9 +40,10 @@ def root():
 
 
 @app.route('/autoDraw')
-@time_it
 def auto_draw():
     if request.args.get('sketch_id'):
+        if cfg.DEBUG:
+            print('[DEBUG] Getting sketch from datastore with id: ', request.args.get('sketch_id'))
         source_blob_name = f"{request.args.get('sketch_id')}/coordinates.json"
         sketch_coords = json.loads(download_blob(storage_client, cfg.SKETCH_BUCKET, source_blob_name))
 
@@ -68,16 +71,19 @@ def auto_draw():
         "success": True,
         "filepath": current_chair
     }
+    print(f'[INFO] Sending chair: {current_chair}')
     return jsonify(resp)
 
 
 @app.route("/generate", methods=["POST"])
 def generate():
     if cfg.DEBUG:
-        max_iter = 10
+        max_iter = cfg.STRESS_TEST_ITERATIONS
+        pipeline = PipelineTimer()
     else:
         max_iter = 1
     for i in range(max_iter):
+        print(f'[INFO] Iteration {i+1}/{max_iter}')
         if pipeline:
             pipeline('start')
         sketch = request.json["imgBase64"]
@@ -138,6 +144,9 @@ def generate():
             images.append({'name': product_name, 'src': img_blob})
         if pipeline:
             pipeline('got product images')
+            if current_chair:
+                pipeline.export(path=f"test_results/{current_chair.split('/')[-1].split('.')[0]}.json")
+                # upload_json(storage_client, cfg.TEST_RESULT_BUCKET, f"{current_chair.split('/')[-1].split('.')[0]}.json", json.dumps(pipeline.get_statistic()))
 
         generated_chair = add_png_header(generated_chair)
         resp = {
@@ -146,10 +155,6 @@ def generate():
             "original_sketch": sketch,
             "generated_chair": generated_chair
         }
-        if pipeline:
-            pipeline('generated response')
-            if current_chair:
-                pipeline.export(path=current_chair.split('/')[-1].split('.')[0] + '.json')
     return jsonify(resp)
 
 
@@ -160,6 +165,11 @@ def download_blob(client, bucket_name, source_blob_name):
     b64_img = blob.download_as_string()
     return b64_img
 
+def upload_json(client, bucket_name, destination_blob_name, data):
+    """Uploads a file to the bucket."""
+    bucket = client.get_bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_string(data, content_type='application/json')
 
 def upload_blob(client, bucket_name, blob, destination_blob_name):
     """Uploads blob to gcs"""

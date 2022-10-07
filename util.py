@@ -75,6 +75,7 @@ class PipelineTimer:
                 'std': np.std(value),
                 'mean': np.mean(value)
             }
+        result['total_time'] = time.time() - self.start
         result['num of data'] = len(value)
         # remove 'start' key
         result.pop('start')

@@ -1,0 +1,17 @@
+runtime: python39
+service: pipeline-test
+env: standard
+handlers:
+  - url: /assets
+    static_dir: assets
+  - url: /.*
+    script: auto
+    secure: always
+  - url: .*
+    script: auto
+
+env_variables:
+  RUNNING_ON_GCP: True
+  PORT: 8080
+
+entrypoint: gunicorn -b :$PORT main:app --timeout 75 --workers=4 --preload
