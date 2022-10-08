@@ -67,6 +67,7 @@ $(document).ready(function () {
   })
 
   $(document).on("click", ".hs-button", function () {
+  // $('.hs-button').click( function () {
     $.ajax({
       type: "POST",
       url: "send-sketch",
@@ -76,8 +77,8 @@ $(document).ready(function () {
         x: $('#x-form').val(),
         y: $('#y-form').val(),
         drag: $('#drag-form').val(),
-        name: $('#firstname-1498f4f2-f2d6-4df0-a8e8-c385388f842f').val(),
-        email: $('#email-1498f4f2-f2d6-4df0-a8e8-c385388f842f').val()
+        name: $('#firstname-f5352a9c-2ef7-4070-8855-951365afc831').val(),
+        email: $('#email-f5352a9c-2ef7-4070-8855-951365afc831').val()
       }),
       success: function (data) {
       },

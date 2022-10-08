@@ -14,5 +14,4 @@ LOCAL_CREDENTIALS = "/Users/evan/Documents/demo/chair-search/config/chair-search
 
 
 DEBUG = False
-BASE_URL = "127.0.0.1:8080"
 STRESS_TEST_ITERATIONS = 100
