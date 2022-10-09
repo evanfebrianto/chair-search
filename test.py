@@ -1,25 +1,10 @@
-from util import PipelineTimer
-import time
-import json
-import speedtest
+from util import Downloader
+from config import config as cfg
 
-pipeline = PipelineTimer()
-def random_func():
-    for i in range(10):
-        pipeline('start')
-        print('Running pipeline 1')
-        time.sleep(0.2)
-        pipeline('pipeline 1')
-        print('Running pipeline 2')
-        time.sleep(.2)
-        pipeline('pipeline 2')
-        print('Running pipeline 3')
-        time.sleep(.2)
-        pipeline('pipeline 3')
+downloader = Downloader(project_id=cfg.PROJECT_ID, bucket_name=cfg.BUCKET_NAME)
+bucket= {'scraped_images/ÖGLA/test_1.png': 'ÖGLA', 'scraped_images/IDOLF/test_1.png': 'IDOLF', 'scraped_images/NORRARYD/test_1.png': 'NORRARYD', 'scraped_images/HARRY/test_1.png': 'HARRY'}
+# blob_images = downloader.get_blob_images(list(bucket.keys()))
+# print(blob_images)
 
-if __name__ == '__main__':
-    for i in range(3):
-        random_func()
-    # print(pipeline.data)
-    print(json.dumps(pipeline.get_statistic()))
-    pipeline.export('test.json')
+blob_images = downloader.get_blob_images_parallel(list(bucket.keys()))
+print(blob_images)

@@ -2,19 +2,14 @@ import base64
 import os, glob
 from datetime import datetime
 import random
-from urllib import response
 import uuid
 import json
-import time
-
-from tqdm import tqdm
 
 from flask import Flask, render_template, request, redirect, jsonify
 from google.cloud import storage, datastore
-import requests
 
-from vision.product_catalogue import get_similar_products, get_reference_image, sample_get_reference_image
-from util import predict_json, time_it, PipelineTimer
+from vision.product_catalogue import get_similar_products, get_reference_image
+from util import predict_json, PipelineTimer, preprocess_image, ProductCatalogue, Downloader
 from config import config as cfg
 
 if not os.getenv("RUNNING_ON_GCP"):
@@ -31,6 +26,14 @@ current_chair = None
 pipeline = None
 if cfg.DEBUG:
     pipeline = PipelineTimer()
+
+downloader = Downloader(project_id=cfg.PROJECT_ID, bucket_name=cfg.BUCKET_NAME)
+
+# Be careful with this line, it need to be re-run if you change the product images
+# Create a ProductCatalogue object
+catalogue = ProductCatalogue(project_id=cfg.PROJECT_ID, location_id=cfg.LOCATION_ID)
+# Get the product mapping
+product_mapping = catalogue.get_product_mapping()
 
 @app.route("/index.html")
 @app.route("/")
@@ -76,7 +79,7 @@ def auto_draw():
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    global pipeline
+    global pipeline, product_mapping, downloader
     if cfg.DEBUG:
         max_iter = cfg.STRESS_TEST_ITERATIONS
         pipeline = PipelineTimer()
@@ -89,23 +92,8 @@ def generate():
         sketch = request.json["imgBase64"]
         if pipeline:
             pipeline('downloaded sketch')
-        # This code below saves the drawn chair locally
-        # with open("huijie_something_3.json", 'w') as file:
-        #     import json
-        #     # request.json.pop('imgBase64')
-        #     local_img = {
-        #         'x': request.json['x'],
-        #         'y': request.json['y'],
-        #         'drag': request.json['drag']
-        #     }
+        cropped_sketch = json.loads(preprocess_image(sketch.split(',')[1]))
 
-        #     local_img['x'] = [str(number) for number in local_img['x']]
-        #     local_img['y'] = [str(number) for number in local_img['y']]
-        #     file.write(json.dumps(local_img))
-        payload = {
-            "img": sketch.split(',')[1]
-        }
-        cropped_sketch = requests.post(cfg.PREPROCESS_URL, json=payload).json()
         if pipeline:
             pipeline('preprocessed sketch')
         generated_chair = predict_json(project="chair-search-demo", model="chair_generation",
@@ -118,34 +106,31 @@ def generate():
         if pipeline:
             pipeline('got similar products')
 
-        # For debugging purposes
-        # export similar_products which contains list of dicts
-        # with open("similar_products.json", 'w') as file:
-        #     from google.protobuf.json_format import MessageToJson, MessageToDict
-        #     serialized = MessageToJson(response._pb)
-        #     _dict = MessageToDict(response._pb)
-        #     # file write _dict
-        #     file.write(json.dumps(_dict))
-
         top = sorted(similar_products, key=lambda product: product.score, reverse=True)[:4]
         if pipeline:
             pipeline('filtered similar products')
         products = [(product.product.display_name, product.image, product.score) for product in
                     top] or "No matching products found!"
+        # print(f'[DEBUG] Products: {products}')
         if pipeline:
             pipeline('got product info')
+        bucket = {}
         images = []
-        for index, (product_name, product_image, product_score) in enumerate(products):
-            img_uri = get_reference_image(product_image).uri.split('/')
-            blob_name = os.path.join(*img_uri[3:])
-            img_blob = download_blob(storage_client, cfg.BUCKET_NAME, blob_name)
-            img_blob = base64.b64encode(img_blob).decode()  # Convert to string so we can add data URI header
-            img_blob = add_png_header(img_blob)
-            images.append({'name': product_name, 'src': img_blob})
+        for (product_name, product_image, _) in products:
+            # img_uri = get_reference_image(product_image).uri.split('/')
+            # print(f'[DEBUG] product_name: {product_name}, product_image: {product_image}, img_uri: {img_uri}')
+            bucket[product_mapping[product_image]] = product_name
+        print(f'[DEBUG] Bucket: {bucket}')
+        print(f'[DEBUG] Bucket keys: {list(bucket.keys())}')
+        blob_images = downloader.get_blob_images(list(bucket.keys()))
+        print(f'[DEBUG] Blob images: {blob_images}')
+        for image_source, product_name in bucket.items():
+            images.append({'name': product_name, 'src': blob_images[image_source]})
+
         if pipeline:
             pipeline('got product images')
             if current_chair:
-                pipeline.export(path=f"test_results/{current_chair.split('/')[-1].split('.')[0]}.json")
+                pipeline.export(path=f"improvemenet_results/{current_chair.split('/')[-1].split('.')[0]}.json")
                 # upload_json(storage_client, cfg.TEST_RESULT_BUCKET, f"{current_chair.split('/')[-1].split('.')[0]}.json", json.dumps(pipeline.get_statistic()))
 
         generated_chair = add_png_header(generated_chair)

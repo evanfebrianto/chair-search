@@ -10,3 +10,5 @@ __pycache__
 sendgrid.env
 
 config/chair-search-demo-f68cf7e1a28a.json
+
+training/
