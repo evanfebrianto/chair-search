@@ -1,6 +1,6 @@
 from google.cloud import vision_v1p3beta1
 from google.cloud import storage
-from multiprocessing import Pool, Process, Queue
+from multiprocessing import Pool, Process, Queue, Manager
 import googleapiclient.discovery
 from skimage.morphology import thin
 import time
@@ -151,11 +151,12 @@ class PipelineTimer:
 
 class ProductCatalogue:
     def __init__(self, project_id, location_id):
+        print(f'[INFO] Initializing Product Catalogue')
         self.project_id = project_id
         self.location_id = location_id
 
         self.client_vision = vision_v1p3beta1.ProductSearchClient()
-        self.products = self.sample_list_products()
+        # self.products = self.sample_list_products()
 
         self.product_mapping = {}
         self.__queue = Queue()
@@ -194,61 +195,59 @@ class ProductCatalogue:
         for response in page_result:
             _resp = {response.name: os.path.join(*response.uri.split('/')[3:])}
             self.__queue.put(_resp)
+            # self.product_mapping.update(_resp)
 
     def get_product_mapping(self):
         processes = []
 
-        for product in self.products:
+        for product in self.sample_list_products():
             p = Process(target=self.sample_list_reference_images, args=(product,))
             p.start()
             processes.append(p)
-
+            
+        # get result from queue
         for p in processes:
             p.join()
+            while not self.__queue.empty():
+                self.product_mapping.update(self.__queue.get())
         
-        while not self.__queue.empty():
-            self.product_mapping.update(self.__queue.get())
-
         return self.product_mapping
 
 class Downloader:
     def __init__(self, project_id, bucket_name):
+        print(f'[INFO] Running Downloader')
         self.project_id = project_id
         self.bucket_name = bucket_name
-        self.blob_images = {}
+        self.blob_images = None
+        self.manager = Manager()
         self.__queue = Queue()
 
     @staticmethod
     def download_blob(project_id, bucket_name, image_source):
-        print(f'[INFO] Running download_blobs')
+        # print(f'[INFO] Running download_blobs')
         client_bucket = storage.Client(project=project_id)
         bucket = client_bucket.get_bucket(bucket_name)
         blob = bucket.blob(image_source)
-        blob = blob.download_as_string()
-        blob = "data:image/png;base64," + base64.b64encode(blob).decode()
-        return {image_source: blob}
-
-    def get_blob_images(self, images_to_download: list):
-        # run download_blob in parallel
-        with Pool(processes=4) as pool:
-            results = pool.starmap(self.download_blob, [(self.project_id, self.bucket_name, image_source) for image_source in images_to_download])
-        return {k: v for d in results for k, v in d.items()}
+        try:
+            blob = blob.download_as_string()
+            blob = "data:image/png;base64," + base64.b64encode(blob).decode()
+            return {image_source: blob}
+        except Exception as e:
+            # print(f'[ERROR] {e}')
+            return None
 
     def download_blob_parallel(self, image_source):
-        self.__queue.put(self.download_blob(self.project_id, self.bucket_name, image_source))
+        result = self.download_blob(self.project_id, self.bucket_name, image_source)
+        if result:
+            self.blob_images.update(result)
 
-    def get_blob_images_parallel(self, images_to_download: list):
+    def download_blob_manager(self, image_source):
+        self.blob_images = self.manager.dict()
         processes = []
-
-        for image_source in images_to_download:
+        for image_source in image_source:
             p = Process(target=self.download_blob_parallel, args=(image_source,))
             p.start()
             processes.append(p)
 
         for p in processes:
             p.join()
-        
-        while not self.__queue.empty():
-            self.blob_images.update(self.__queue.get())
-
-        return self.blob_images

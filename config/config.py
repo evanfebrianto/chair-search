@@ -12,5 +12,5 @@ PREPROCESS_URL = "https://europe-west1-chair-search-demo.cloudfunctions.net/prep
 
 LOCAL_CREDENTIALS = "/Users/evan/Documents/demo/chair-search/config/chair-search-demo-f68cf7e1a28a.json"
 
-DEBUG = True
-STRESS_TEST_ITERATIONS = 1
+DEBUG = False
+STRESS_TEST_ITERATIONS = 100

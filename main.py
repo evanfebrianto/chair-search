@@ -3,7 +3,7 @@ import os, glob
 from datetime import datetime
 import random
 import uuid
-import json
+import json, time
 
 from flask import Flask, render_template, request, redirect, jsonify
 from google.cloud import storage, datastore
@@ -34,6 +34,7 @@ downloader = Downloader(project_id=cfg.PROJECT_ID, bucket_name=cfg.BUCKET_NAME)
 catalogue = ProductCatalogue(project_id=cfg.PROJECT_ID, location_id=cfg.LOCATION_ID)
 # Get the product mapping
 product_mapping = catalogue.get_product_mapping()
+downloader.download_blob_manager(list(product_mapping.values()))
 
 @app.route("/index.html")
 @app.route("/")
@@ -89,13 +90,15 @@ def generate():
         if pipeline:
             print(f'[INFO] Iteration {i+1}/{max_iter}')
             pipeline('start')
+
         sketch = request.json["imgBase64"]
         if pipeline:
             pipeline('downloaded sketch')
-        cropped_sketch = json.loads(preprocess_image(sketch.split(',')[1]))
 
+        cropped_sketch = json.loads(preprocess_image(sketch.split(',')[1]))
         if pipeline:
             pipeline('preprocessed sketch')
+
         generated_chair = predict_json(project="chair-search-demo", model="chair_generation",
                                     input=cropped_sketch, version=cfg.MODEL_VERSION)
         if pipeline:
@@ -109,29 +112,22 @@ def generate():
         top = sorted(similar_products, key=lambda product: product.score, reverse=True)[:4]
         if pipeline:
             pipeline('filtered similar products')
+
         products = [(product.product.display_name, product.image, product.score) for product in
                     top] or "No matching products found!"
         # print(f'[DEBUG] Products: {products}')
         if pipeline:
             pipeline('got product info')
-        bucket = {}
+
         images = []
         for (product_name, product_image, _) in products:
-            # img_uri = get_reference_image(product_image).uri.split('/')
-            # print(f'[DEBUG] product_name: {product_name}, product_image: {product_image}, img_uri: {img_uri}')
-            bucket[product_mapping[product_image]] = product_name
-        print(f'[DEBUG] Bucket: {bucket}')
-        print(f'[DEBUG] Bucket keys: {list(bucket.keys())}')
-        blob_images = downloader.get_blob_images(list(bucket.keys()))
-        print(f'[DEBUG] Blob images: {blob_images}')
-        for image_source, product_name in bucket.items():
-            images.append({'name': product_name, 'src': blob_images[image_source]})
-
+            image_source = product_mapping[product_image]
+            images.append({'name': product_name, 'src': downloader.blob_images[image_source]})
         if pipeline:
             pipeline('got product images')
-            if current_chair:
-                pipeline.export(path=f"improvemenet_results/{current_chair.split('/')[-1].split('.')[0]}.json")
-                # upload_json(storage_client, cfg.TEST_RESULT_BUCKET, f"{current_chair.split('/')[-1].split('.')[0]}.json", json.dumps(pipeline.get_statistic()))
+            # if current_chair:
+            #     pipeline.export(path=f"improvement_results/{current_chair.split('/')[-1].split('.')[0]}.json")
+            #     upload_json(storage_client, cfg.TEST_RESULT_BUCKET, f"{current_chair.split('/')[-1].split('.')[0]}.json", json.dumps(pipeline.get_statistic()))
 
         generated_chair = add_png_header(generated_chair)
         resp = {
@@ -220,5 +216,5 @@ if __name__ == "__main__":
     # the "static" directory. See:
     # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
     # App Engine itself will serve those files as configured in app.yaml.
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='127.0.0.1', port=8080, debug=True, use_reloader=False)
     # Add labels to chairs and use "Jag vill ha dyna" "jag vill ha armstöd" as labels and use these for product catalogue
